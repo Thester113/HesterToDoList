@@ -1,38 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
+import ToDo from "./components/ToDo"; 
+import { gql, useQuery } from '@apollo/client';
 
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-}
+// GraphQL query to get location names
+const GET_LOCATIONS = gql`
+  query Locations {
+    locations {
+      name
+    }
+  }
+`;
 
 const App: React.FC = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [newTodo, setNewTodo] = useState<string>("");
+  const { loading, error, data } = useQuery(GET_LOCATIONS);
 
-  const addTodo = () => {
-    if (newTodo.trim() !== "") {
-      const newTask: Todo = {
-        id: Date.now(),
-        text: newTodo,
-        completed: false,
-      };
-      setTodos([...todos, newTask]);
-      setNewTodo("");
-    }
-  };
-
-  const toggleTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
-    );
-  };
-
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-  };
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <div
@@ -49,29 +32,29 @@ const App: React.FC = () => {
       }}
     >
       <h1>Hester Todo List</h1>
-      <input
-        type="text"
-        value={newTodo}
-        onChange={(e) => setNewTodo(e.target.value)}
-      />
-      <button onClick={addTodo}>Add Todo</button>
-      {todos.map((todo) => (
-        <div key={todo.id}>
-          <span
-            style={{ textDecoration: todo.completed ? "line-through" : "none" }}
-          >
-            {todo.text}
-          </span>
-          <button onClick={() => toggleTodo(todo.id)}>
-            {todo.completed ? "Undo" : "Done"}
-          </button>
-          <button onClick={() => deleteTodo(todo.id)}>Delete</button>
-        </div>
-      ))}
-      <footer>
-        <p>Total tasks: {todos.length}</p>
-      </footer>
+      <ToDo />
+      <div>
+        <h2>Location Names</h2>
+        <table border={1} cellPadding="10" style={{ borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Location Name</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.locations.map((location: { name: string }, index: number) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{location.name}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
+
 export default App;
+
